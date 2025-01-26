@@ -13,7 +13,6 @@ class LogViewerWindow(QtWidgets.QMainWindow):
         
         self.infoDict = {}
         self.fileName = ""
-        
        
         self.mainTable  = self.findChild(QTableWidget, "mainTable")
         self.loadBtn    = self.findChild(QPushButton, "loadBtn")
@@ -23,17 +22,20 @@ class LogViewerWindow(QtWidgets.QMainWindow):
         
         # Take & relinquish control, engines start, engines off
         self.showTC = self.findChild(QAction, "actionTake_Control")
+        self.showUC = self.findChild(QAction, "actionUnder_control")
         self.showRC = self.findChild(QAction, "actionRelinquish")
         self.showES = self.findChild(QAction, "actionEngine_startup")
         self.showEO = self.findChild(QAction, "actionEngine_shutdown")
         
         # Shot, hit, kill, BDA, ai abort, pilot dead
-        self.showShot = self.findChild(QAction, "actionShot")
-        self.showHit = self.findChild(QAction, "actionHit")
-        self.showKill = self.findChild(QAction, "actionKill")
-        self.showBDA = self.findChild(QAction, "actionBDA")
-        self.showAIA = self.findChild(QAction, "actionAI_Abort_Mission")
-        self.showPD = self.findChild(QAction, "actionPilot_dead")
+        self.showShot       = self.findChild(QAction, "actionShot")
+        self.showHit        = self.findChild(QAction, "actionHit")
+        self.showKill       = self.findChild(QAction, "actionKill")
+        self.showBDA        = self.findChild(QAction, "actionBDA")
+        self.showAIA        = self.findChild(QAction, "actionAI_Abort_Mission")
+        self.showPD         = self.findChild(QAction, "actionPilot_dead")
+        self.showShotStart  = self.findChild(QAction, "actionStart_shooting")
+        self.showShotEnd    = self.findChild(QAction, "actionEnd_shooting")
         
         # eject, crash, discard chair
         self.showPDC = self.findChild(QAction, "actionPilot_discard_chair")
@@ -45,10 +47,14 @@ class LogViewerWindow(QtWidgets.QMainWindow):
         self.showLD = self.findChild(QAction, "actionLand")
         
         self.showSCR = self.findChild(QAction, "actionScore")
+        self.showStart = self.findChild(QAction, "actionMission_start")
+        self.showEnd = self.findChild(QAction, "actionMission_End")
         
         # Refresh / other settings
         self.findChild(QAction, "actionRefresh").triggered.connect(self.refreshTable)
         self.findChild(QAction, "actionSave").triggered.connect(self.save)
+        self.findChild(QAction, "actionShow_all").triggered.connect(self.showAll)
+        self.findChild(QAction, "actionShow_none").triggered.connect(self.showNone)
         
         self.reopenLast   = self.findChild(QAction, "actionReopen")
          
@@ -74,23 +80,43 @@ class LogViewerWindow(QtWidgets.QMainWindow):
             self.showSCR,
             self.allMyEvents,
             self.onlyMyEvents,
-            self.reopenLast,
+            self.showStart,
+            self.showEnd,
+            self.showStart,
+            self.showUC,
+            self.showEnd,
+            self.showEO,
+            self.showES,
+            self.showPD,
+            self.showEJT,
+            self.showPDC,
+            self.showSCR,
+            self.showShotStart,
+            self.showShotEnd,
         ]
         
         try:
             loadData = json.load(open("settings.json"))
-            
             for i,value in enumerate(loadData["filters"]):
                 self.saveLoadList[i].setChecked(value)
-            
             try:
+                self.reopenLast.setChecked(loadData.get("reopen", 1))
                 if loadData["reopen"]:
                     self._loadFile(loadData["file"])
             except (FileNotFoundError, KeyError):
                 pass
-        
         except FileNotFoundError:
             pass
+    
+    def showAll(self):
+        for x in self.saveLoadList:
+            if x.objectName() not in ["actionAll_my_events","actionOnly_my_events"]:
+                x.setChecked(1)
+    
+    def showNone(self):
+        for x in self.saveLoadList:
+            if x.objectName() not in ["actionAll_my_events","actionOnly_my_events"]:
+                x.setChecked(0)
     
     def loadFile(self):
         # Funky windows thing we put here because otherwise it breaks
@@ -140,10 +166,14 @@ class LogViewerWindow(QtWidgets.QMainWindow):
             "took control":self.showTC.isChecked(),
             "takeoff":self.showTO.isChecked(),
             "land":self.showLD.isChecked(),
+            
             "shot":self.showShot.isChecked(),
             "kill":self.showKill.isChecked(),
             "hit":self.showHit.isChecked(),
             "bda":self.showBDA.isChecked(),
+            "start shooting":self.showShotStart.isChecked(),
+            "end shooting":self.showShotEnd.isChecked(),
+            
             "ai abort mission":self.showAIA.isChecked(),
             "relinquished":self.showRC.isChecked(),
             
@@ -154,12 +184,18 @@ class LogViewerWindow(QtWidgets.QMainWindow):
             "pilot dead":self.showPD.isChecked(),
             "pilot discard chair":self.showPDC.isChecked(),
             "eject":self.showEJT.isChecked(),
+            "score":self.showSCR.isChecked(),
+            "mission start":self.showStart.isChecked(),
+            "mission end":self.showEnd.isChecked(),
+            "under control":self.showUC.isChecked(),
             
-            "score":self.showSCR.isChecked()
         }
         
         for event in eventsList:
             currentEvent = eventsList[event]
+            
+            if currentEvent["type"] == "pilot landing":
+                continue
             
             if self.allMyEvents.isChecked():
                 if currentEvent.get("initiatorPilotName", False) != self.playerCallsign:
@@ -179,15 +215,23 @@ class LogViewerWindow(QtWidgets.QMainWindow):
             rowData = [int(event), currentEvent["t"], currentEvent["type"]]
             
             try:
-                rowData.append(f"{currentEvent["initiator_unit_type"]} - ({currentEvent["initiatorPilotName"]})")
+                pilotStr = f"{currentEvent["initiator_unit_type"]} - ({currentEvent["initiatorPilotName"]})"
+                if pilotStr.strip() == " - ()":
+                    rowData.append("")
+                else:
+                    rowData.append(pilotStr)
             except KeyError:
                 rowData.append("")
             
             try:
-                rowData.append(f"{currentEvent["target_unit_type"]} - ({currentEvent["targetPilotName"]})")
+                targetStr = f"{currentEvent["target_unit_type"]} - ({currentEvent["targetPilotName"]})"
+                if targetStr.strip() == " - ()":
+                    rowData.append("")
+                else:
+                    rowData.append(targetStr)
             except KeyError:
                 rowData.append("")
-            
+
             try:
                 rowData.append(currentEvent["weapon"])
             except KeyError:
