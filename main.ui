@@ -1,0 +1,436 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>961</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string>DCS Log Viewer</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QWidget" name="gridLayoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>931</width>
+      <height>541</height>
+     </rect>
+    </property>
+    <layout class="QGridLayout" name="gridLayout">
+     <property name="sizeConstraint">
+      <enum>QLayout::SetNoConstraint</enum>
+     </property>
+     <item row="0" column="0">
+      <widget class="QLabel" name="titleLabel">
+       <property name="text">
+        <string>DCS .log Viewer by UnethicalBear</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QPushButton" name="loadBtn">
+       <property name="text">
+        <string>Load File</string>
+       </property>
+       <property name="shortcut">
+        <string>Ctrl+O</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0" colspan="2">
+      <widget class="QTableWidget" name="mainTable">
+       <property name="sizeAdjustPolicy">
+        <enum>QAbstractScrollArea::AdjustToContents</enum>
+       </property>
+       <property name="editTriggers">
+        <set>QAbstractItemView::NoEditTriggers</set>
+       </property>
+       <property name="alternatingRowColors">
+        <bool>true</bool>
+       </property>
+       <property name="sortingEnabled">
+        <bool>true</bool>
+       </property>
+       <property name="rowCount">
+        <number>0</number>
+       </property>
+       <property name="columnCount">
+        <number>6</number>
+       </property>
+       <column>
+        <property name="text">
+         <string>Event ID</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Timestamp</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Event Type</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Unit</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Target</string>
+        </property>
+       </column>
+       <column>
+        <property name="text">
+         <string>Weapon</string>
+        </property>
+       </column>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>961</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <widget class="QMenu" name="menuFilter_events">
+     <property name="title">
+      <string>Filter events</string>
+     </property>
+     <addaction name="actionMission_start"/>
+     <addaction name="actionMission_Start"/>
+     <addaction name="actionUnder_control"/>
+     <addaction name="actionTake_Control"/>
+     <addaction name="actionRelinquish"/>
+     <addaction name="actionMission_End"/>
+     <addaction name="separator"/>
+     <addaction name="actionTakeoff"/>
+     <addaction name="actionLand"/>
+     <addaction name="actionEngine_startup"/>
+     <addaction name="actionEngine_shutdown"/>
+     <addaction name="separator"/>
+     <addaction name="actionShot"/>
+     <addaction name="actionHit"/>
+     <addaction name="actionKill"/>
+     <addaction name="actionAI_Abort_Mission"/>
+     <addaction name="actionPilot_dead"/>
+     <addaction name="separator"/>
+     <addaction name="actionCrash"/>
+     <addaction name="actionPilot_discard_chair"/>
+     <addaction name="actionEject"/>
+     <addaction name="separator"/>
+     <addaction name="actionScore"/>
+     <addaction name="actionBDA"/>
+    </widget>
+    <addaction name="actionOnly_my_events"/>
+    <addaction name="actionAll_my_events"/>
+    <addaction name="separator"/>
+    <addaction name="menuFilter_events"/>
+    <addaction name="separator"/>
+    <addaction name="actionRefresh"/>
+    <addaction name="actionShow_all"/>
+    <addaction name="actionShow_none"/>
+    <addaction name="separator"/>
+    <addaction name="actionSave"/>
+    <addaction name="actionReopen"/>
+    <addaction name="actionExportJSON"/>
+   </widget>
+   <addaction name="menuView"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionOnly_my_events">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Only my events</string>
+   </property>
+  </action>
+  <action name="actionTake_Control">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Take control</string>
+   </property>
+  </action>
+  <action name="actionShot">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Shot</string>
+   </property>
+  </action>
+  <action name="actionHit">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Hit</string>
+   </property>
+  </action>
+  <action name="actionBDA">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>BDA</string>
+   </property>
+  </action>
+  <action name="actionKill">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Kill</string>
+   </property>
+  </action>
+  <action name="actionAI_Abort_Mission">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>AI Abort Mission</string>
+   </property>
+  </action>
+  <action name="actionTakeoff">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Takeoff</string>
+   </property>
+  </action>
+  <action name="actionLand">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Land</string>
+   </property>
+  </action>
+  <action name="actionRelinquish">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Relinquish control</string>
+   </property>
+  </action>
+  <action name="actionRefresh">
+   <property name="text">
+    <string>Refresh table</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
+   </property>
+  </action>
+  <action name="actionEngine_startup">
+   <property name="text">
+    <string>Engine startup</string>
+   </property>
+  </action>
+  <action name="actionEngine_shutdown">
+   <property name="text">
+    <string>Engine shutdown</string>
+   </property>
+  </action>
+  <action name="actionPilot_dead">
+   <property name="text">
+    <string>Pilot dead</string>
+   </property>
+  </action>
+  <action name="actionMission_Start">
+   <property name="text">
+    <string>Mission Start</string>
+   </property>
+  </action>
+  <action name="actionCrash">
+   <property name="text">
+    <string>Crash</string>
+   </property>
+  </action>
+  <action name="actionPilot_discard_chair">
+   <property name="text">
+    <string>Pilot discard chair</string>
+   </property>
+  </action>
+  <action name="actionEject">
+   <property name="text">
+    <string>Eject</string>
+   </property>
+  </action>
+  <action name="actionMission_start">
+   <property name="text">
+    <string>Mission start</string>
+   </property>
+  </action>
+  <action name="actionUnder_control">
+   <property name="text">
+    <string>Under control</string>
+   </property>
+  </action>
+  <action name="actionMission_End">
+   <property name="text">
+    <string>Mission end</string>
+   </property>
+  </action>
+  <action name="actionScore">
+   <property name="text">
+    <string>Score</string>
+   </property>
+  </action>
+  <action name="actionShow_all">
+   <property name="text">
+    <string>Show all</string>
+   </property>
+  </action>
+  <action name="actionShow_none">
+   <property name="text">
+    <string>Show none</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionSave_last_file">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Save last log file</string>
+   </property>
+  </action>
+  <action name="actionSave_view_filters">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Save view filters</string>
+   </property>
+  </action>
+  <action name="actionExportJSON">
+   <property name="text">
+    <string>Export .log as .json</string>
+   </property>
+  </action>
+  <action name="actionAll_my_events">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>All my events</string>
+   </property>
+  </action>
+  <action name="actionReopen">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Reopen last .log on start</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>actionOnly_my_events</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>actionAll_my_events</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionAll_my_events</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>actionOnly_my_events</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
