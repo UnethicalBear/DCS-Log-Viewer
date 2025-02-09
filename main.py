@@ -1,3 +1,4 @@
+import datetime
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import *
@@ -9,12 +10,11 @@ class LogViewerWindow(QtWidgets.QMainWindow):
         super(LogViewerWindow, self).__init__()
 
         uic.loadUi("main.ui",self)
-        # self.setFixedSize(self.size())
         
         self.infoDict = {}
         self.fileName = ""
        
-        self.mainTable  = self.findChild(QTableWidget, "mainTable")
+        # self.mainTable  = self.findChild(QTableWidget, "mainTable")
         self.loadBtn    = self.findChild(QPushButton, "loadBtn")
         self.titleLabel = self.findChild(QLabel, "titleLabel")
 
@@ -56,6 +56,8 @@ class LogViewerWindow(QtWidgets.QMainWindow):
         self.findChild(QAction, "actionShow_all").triggered.connect(self.showAll)
         self.findChild(QAction, "actionShow_none").triggered.connect(self.showNone)
         
+        self.showUnknown = self.findChild(QAction, "actionShowUnknown")
+        
         self.reopenLast   = self.findChild(QAction, "actionReopen")
          
         self.allMyEvents  = self.findChild(QAction, "actionAll_my_events")
@@ -93,8 +95,25 @@ class LogViewerWindow(QtWidgets.QMainWindow):
             self.showSCR,
             self.showShotStart,
             self.showShotEnd,
+            self.showUnknown    
         ]
         
+        central_widget = QWidget(self)
+        self.setCentralWidget(central_widget)
+        
+        layout = QVBoxLayout()
+        # Create a QTableWidget
+        self.mainTable = QTableWidget(0, 5)  # 0 rows, 5 columns
+        self.mainTable.setHorizontalHeaderLabels(["Event ID", "Timestamp", "Event Type", "Unit", "Target", "Weapon"])
+        # self.mainTable.setSortingEnabled(True)
+        self.mainTable.setEditTriggers(QAbstractItemView.NoEditTriggers)    
+        # Add the table to the layout
+        layout.addWidget(self.titleLabel)
+        layout.addWidget(self.loadBtn)
+        layout.addWidget(self.mainTable)
+        
+        central_widget.setLayout(layout)
+       
         try:
             loadData = json.load(open("settings.json"))
             for i,value in enumerate(loadData["filters"]):
@@ -129,10 +148,11 @@ class LogViewerWindow(QtWidgets.QMainWindow):
             
     def _loadFile(self, fileName):
         self.fileName = fileName
-        with open(fileName, "r") as f:
-            
-            fileString = f.read()
         
+        self.setWindowTitle(f"DCS Log Viewer - {fileName}")
+        
+        with open(fileName, "r") as f:
+            fileString = f.read()
         
         # fileString=fileString.replace("\n", "") # get rid of newlines
         pattern = r'\[(\d+)\]'  # Matches [number] where number is one or more digits
@@ -154,6 +174,7 @@ class LogViewerWindow(QtWidgets.QMainWindow):
             self.populateTable(self.infoDict)
     
     def populateTable(self, jsonDict:dict):
+        showUnknownEvents = self.showUnknown.isChecked()
         self.playerCallsign = jsonDict["callsign"]
         
         self.mainTable.clear()
@@ -190,7 +211,14 @@ class LogViewerWindow(QtWidgets.QMainWindow):
             "under control":self.showUC.isChecked(),
             
         }
+        initialTime = 0
         
+        try:
+            initialTime = float(eventsList["1"]["ta"])
+        except (KeyError, IndexError, ValueError, TypeError):
+            pass # use intialtime = 0 as we couldn't get the inital time
+        
+        rowIndex = 0
         for event in eventsList:
             currentEvent = eventsList[event]
             
@@ -206,13 +234,14 @@ class LogViewerWindow(QtWidgets.QMainWindow):
                     continue
                     # continue if this event isn't ours or we filter it out
                 
-                if not showEventsDictionary.get(currentEvent["type"], 1):
+                if not showEventsDictionary.get(currentEvent["type"], showUnknownEvents):
                     continue
             
-            rowIndex = self.mainTable.rowCount()
-            self.mainTable.setRowCount(rowIndex+1)
+            self.mainTable.setRowCount(self.mainTable.rowCount()+1)
+            rowIndex = self.mainTable.rowCount()-1
 
-            rowData = [int(event), currentEvent["t"], currentEvent["type"]]
+            rowData = [currentEvent.get("event_id",""), 0, currentEvent["type"]]
+            rowData[1] = datetime.datetime.fromtimestamp(float(currentEvent["t"]) + initialTime).strftime('%H:%M:%S')
             
             try:
                 pilotStr = f"{currentEvent["initiator_unit_type"]} - ({currentEvent["initiatorPilotName"]})"
@@ -224,11 +253,14 @@ class LogViewerWindow(QtWidgets.QMainWindow):
                 rowData.append("")
             
             try:
-                targetStr = f"{currentEvent["target_unit_type"]} - ({currentEvent["targetPilotName"]})"
-                if targetStr.strip() == " - ()":
-                    rowData.append("")
+                if currentEvent["type"] == "land":
+                    rowData.append(currentEvent["place"])
                 else:
-                    rowData.append(targetStr)
+                    targetStr = f"{currentEvent["target_unit_type"]} - ({currentEvent["targetPilotName"]})"
+                    if targetStr.strip() == " - ()":
+                        rowData.append("")
+                    else:
+                        rowData.append(targetStr)
             except KeyError:
                 rowData.append("")
 
@@ -238,9 +270,12 @@ class LogViewerWindow(QtWidgets.QMainWindow):
                 rowData.append("")
                 
             for i in range(len(rowData)):
-                self.mainTable.setItem(rowIndex, i, QTableWidgetItem())
-                self.mainTable.item(rowIndex, i).setData(Qt.DisplayRole, rowData[i])
-    
+                print(rowData)
+                self.mainTable.setItem(rowIndex, i, QTableWidgetItem(str(rowData[i])))
+                # self.mainTable.itemAt(rowIndex, i).setData(Qt.DisplayRole, rowData[i])
+
+        self.mainTable.resizeColumnsToContents()  
+        
     def save(self):
         settings = {
             "file":self.fileName,
@@ -252,5 +287,5 @@ class LogViewerWindow(QtWidgets.QMainWindow):
 if __name__ == "__main__":                      
     app = QtWidgets.QApplication(sys.argv)
     window = LogViewerWindow()
-    window.show()
+    window.showMaximized()
     sys.exit(app.exec())
